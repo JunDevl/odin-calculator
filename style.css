@@ -1,4 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Nova+Mono&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+
+:root {
+  --calculator-color: #1f263a;
+  --calculator-shadow-color: #0c0e1b;
+
+  --display-color: #7bbd9e;
+  --display-shadow-color: #70a794;
+
+  --numbers-color: #c2c7ce;
+  --numbers-shadow-color: #aaafbd;
+  --numbers-hover-color: #d8dee2;
+
+  --operators-color: #39813d;
+  --operators-shadow-color: #2f6144;
+  --operators-hover-color: #588d43;
+
+  --clear-color: #b66a23;
+  --clear-shadow-color: #974f1f;
+  --clear-hover-color: #cc862a;
+}
+
 body {
+  background-color: rgb(59, 57, 65);
   margin: 0;
   min-height: 100vh;
   min-width: 100vw;
@@ -9,8 +32,9 @@ body {
 
 .calculator {
   width: 400px;
-  height: 460px;
-  background-color: gray;
+  height: 500px;
+  background-color: var(--calculator-color);
+  border-bottom: 25px solid var(--calculator-shadow-color);
   padding: 3rem;
   display: flex;
   flex-direction: column;
@@ -25,13 +49,15 @@ body {
 
 #display {
   position: relative;
-  background-color: aquamarine;
+  background-color: #7bbd9e;
+  border-top: 12px solid var(--display-shadow-color);
   border-radius: 1rem;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
   box-sizing: border-box;
+  padding-left: 10px;
 }
 
 input {
@@ -40,13 +66,27 @@ input {
   border-radius: inherit;
   flex: 0 1 auto;
   padding: 1rem;
+  padding-left: 1.4rem;
   border: none;
   text-align: start;
   font-size: 2.5rem;
+  font-family: "Nova Mono";
   box-sizing: border-box;
 }
 
-input:focus {
+button {
+  border: none;
+  border-bottom: 8px solid;
+  font-family: 'Roboto';
+  font-size: 2rem;
+  transition: background-color ease-out 65ms, border ease-out 65ms;
+}
+
+button:active {
+  border-bottom: none;
+}
+
+input:focus, button:focus {
   outline: none;
 }
 
@@ -58,18 +98,46 @@ input:focus {
   gap: 6px;
 }
 
-.grid button {
-  font-size: 1.5rem;
+.operator {
+  background-color: var(--operators-color);
+  border-bottom-color: var(--operators-shadow-color);
+  color: white;
 }
 
-.operator {
-  background-color: #86b0e0;
+.operator:hover {
+  background-color: var(--operators-hover-color);
+  border-bottom-color: var(--operators-color);
+}
+
+.operator:active {
+  background-color: var(--operators-color);
 }
 
 .number {
-  background-color: #edf1f3;
+  background-color: var(--numbers-color);
+  border-bottom-color: var(--numbers-shadow-color);
+}
+
+.number:hover {
+  background-color: var(--numbers-hover-color);
+  border-bottom-color: var(--numbers-color);
+}
+
+.number:active {
+  background-color: var(--numbers-color);
 }
 
 #clear {
-  background-color: #E086B0;
+  background-color: var(--clear-color);
+  border-bottom-color: var(--clear-shadow-color);
+  color: white;
+}
+
+#clear:hover {
+  background-color: var(--clear-hover-color);
+  border-bottom-color: var(--clear-color);
+}
+
+#clear:active {
+  background-color: var(--clear-color);
 }
