@@ -1,3 +1,16 @@
+const ERROR_DISPLAY_VALUE = "E";
+const LOCALE = Intl.NumberFormat().resolvedOptions().locale; // beware that the webapp may break if your country uses an unusual numbering system (a system that doesn't use commas or dots to separate thousands and decimals), as there is no test case for such scenarios.
+const DECIMAL_SEPARATOR = Intl.NumberFormat(LOCALE)
+  .formatToParts(0.5)
+  .find(part => part.type === 'decimal')
+  .value;
+const THOUSAND_SEPARATOR = Intl.NumberFormat(LOCALE)
+  .formatToParts(1000)
+  .find(part => part.type === 'group')
+  .value;
+
+document.querySelector("#decimal-separator").textContent = DECIMAL_SEPARATOR;
+
 let grid = document.querySelector(".grid");
 let operation = document.querySelector(".operation");
 let input = document.querySelector("#input");
@@ -8,8 +21,6 @@ let numbers = document.querySelectorAll(".number");
 
 document.addEventListener("keydown", handleKeyboardInput);
 grid.addEventListener("mouseup", handleMouseInput);
-
-const ERROR_DISPLAY_VALUE = "E";
 
 let previousValue = 0;
 let currentValue = 0;
@@ -25,8 +36,11 @@ function handleKeyboardInput(event) {
   newInput = newInput === "/" ? "÷" :
     newInput === "*" ? "×" : newInput;
 
-  if (newInput === ".") {
-    input.value = `${input.value}.`;
+  const converted = convertFormattedToString(input.value);
+  const decimalCount = input.value.slice(input.value.indexOf(DECIMAL_SEPARATOR) + 1).length + 1;
+
+  if (newInput === DECIMAL_SEPARATOR) {
+    input.value = !input.value.includes(DECIMAL_SEPARATOR) ? `${input.value}${DECIMAL_SEPARATOR}` : input.value;
     return;
   }
 
@@ -38,22 +52,30 @@ function handleKeyboardInput(event) {
   }
 
   if (newInput === "Backspace") {
-    input.value = input.value.length > 1 ? input.value.slice(0, -1) : 0;
+    input.value = input.value.length > 1 ?
+      (input.value.includes(DECIMAL_SEPARATOR)) ? input.value.slice(0, -1) :
+        Intl.NumberFormat(LOCALE, { maximumFractionDigits: decimalCount }).format(String(currentValue).slice(0, -1)) : 0;
+    currentValue = convertFormattedToNumber(input.value);
     return;
   }
 
   if (newInput === "Enter" || newInput === "=") {
-    const emptyOperation = Boolean(!currentOperation);
-    input.value = calculate(previousValue, currentOperation, currentValue);
+    const result = calculate(previousValue, currentOperation, currentValue);
+    const resultDecimals = String(result).slice(input.value.indexOf(DECIMAL_SEPARATOR) + 1).length + 1;
+
+    const emptyCurrentOperation = Boolean(!currentOperation);
+
+    input.value = result !== ERROR_DISPLAY_VALUE ? Intl.NumberFormat(LOCALE, { maximumFractionDigits: resultDecimals }).format(result) : ERROR_DISPLAY_VALUE;
     operation.textContent = "";
 
-    if (!emptyOperation) clearAll();
+    if (!emptyCurrentOperation) clearAll();
     return;
   }
 
   if (isNaN(newInput)) {
     const alreadyHadOperation = Boolean(currentOperation);
-    previousValue = alreadyHadOperation ? calculate(previousValue, currentOperation, currentValue) : Number(input.value);
+    previousValue = alreadyHadOperation ? calculate(previousValue, currentOperation, currentValue) :
+      convertFormattedToNumber(input.value);
 
     switch (newInput) {
       case "÷":
@@ -78,18 +100,23 @@ function handleKeyboardInput(event) {
     return;
   }
 
-  input.value = input.value == 0 || input.value == ERROR_DISPLAY_VALUE ?
-    newInput : `${input.value}${newInput}`;
-  currentValue = Number(input.value);
+  input.value = (input.value === "0" && !input.value.includes(DECIMAL_SEPARATOR)) || input.value == ERROR_DISPLAY_VALUE ?
+    newInput :
+    input.value.at(decimalCount) ? `${input.value}${newInput}` :
+      Intl.NumberFormat(LOCALE, { maximumFractionDigits: decimalCount }).format(`${converted}${newInput}`);
+
+  currentValue = convertFormattedToNumber(input.value);
 }
 
 function handleMouseInput(event) {
   if (event.target.tagName !== "BUTTON" && event.type === "mouseup") return;
 
   let newInput = event.target.textContent;
+  const converted = convertFormattedToString(input.value);
+  const decimalCount = input.value.slice(input.value.indexOf(DECIMAL_SEPARATOR) + 1).length + 1;
 
-  if (newInput === ".") {
-    input.value = `${input.value}.`;
+  if (newInput === DECIMAL_SEPARATOR) {
+    input.value = !input.value.includes(DECIMAL_SEPARATOR) ? `${input.value}${DECIMAL_SEPARATOR}` : input.value;
     return;
   }
 
@@ -101,23 +128,34 @@ function handleMouseInput(event) {
   }
 
   if (event.target.id === "backspace") {
-    input.value = input.value.length > 1 ? input.value.slice(0, -1) : input.value;
+    input.value = input.value.length > 1 ?
+      (input.value.includes(DECIMAL_SEPARATOR)) ? input.value.slice(0, -1) :
+        Intl.NumberFormat(LOCALE, { maximumFractionDigits: decimalCount }).format(String(currentValue).slice(0, -1)) : 0;
+    currentValue = convertFormattedToNumber(input.value);
     return;
   }
 
   if (event.target.id === "equals") {
-    const emptyOperation = Boolean(!currentOperation);
-    input.value = calculate(previousValue, currentOperation, currentValue);
+    const result = calculate(previousValue, currentOperation, currentValue);
+    const resultDecimals = String(result).slice(input.value.indexOf(DECIMAL_SEPARATOR) + 1).length + 1;
+
+    const emptyCurrentOperation = Boolean(!currentOperation);
+
+    input.value = result !== ERROR_DISPLAY_VALUE ? Intl.NumberFormat(LOCALE, { maximumFractionDigits: resultDecimals }).format(result) : ERROR_DISPLAY_VALUE;
     operation.textContent = "";
 
-    if (!emptyOperation) clearAll();
+    if (!emptyCurrentOperation) clearAll();
     return;
   }
 
   if (event.target.id === "square-root") {
     currentOperation = event.target.id;
-    currentValue = input.value;
-    input.value = calculate(currentValue, currentOperation);
+    currentValue = convertFormattedToNumber(input.value);
+
+    const result = calculate(currentValue, currentOperation);
+    const resultDecimals = String(result).slice(input.value.indexOf(DECIMAL_SEPARATOR) + 1).length + 1;
+
+    input.value = Intl.NumberFormat(LOCALE, { maximumFractionDigits: resultDecimals }).format(result);
 
     clearAll();
     return;
@@ -125,7 +163,8 @@ function handleMouseInput(event) {
 
   if (isNaN(newInput)) {
     const alreadyHadOperation = Boolean(currentOperation);
-    previousValue = alreadyHadOperation ? calculate(previousValue, currentOperation, currentValue) : Number(input.value);
+    previousValue = alreadyHadOperation ? calculate(previousValue, currentOperation, currentValue) :
+      convertFormattedToNumber(input.value);
 
     currentOperation = event.target.id;
     operation.textContent = newInput;
@@ -134,9 +173,12 @@ function handleMouseInput(event) {
     return;
   }
 
-  input.value = input.value == 0 || input.value == ERROR_DISPLAY_VALUE ?
-    newInput : `${input.value}${newInput}`;
-  currentValue = Number(input.value);
+  input.value = (input.value === "0" && !input.value.includes(DECIMAL_SEPARATOR)) || input.value == ERROR_DISPLAY_VALUE ?
+    newInput :
+    input.value.at(decimalCount) ? `${input.value}${newInput}` :
+      Intl.NumberFormat(LOCALE, { maximumFractionDigits: decimalCount }).format(`${converted}${newInput}`);
+
+  currentValue = convertFormattedToNumber(input.value);
 };
 
 function calculate(val1, operation, val2 = undefined) {
@@ -165,4 +207,12 @@ function clearAll() {
   previousValue = 0;
   currentValue = 0;
   currentOperation = "";
+}
+
+function convertFormattedToNumber(formattedString) {
+  return Number(formattedString.replaceAll(THOUSAND_SEPARATOR, "").replaceAll(DECIMAL_SEPARATOR, "."));
+}
+
+function convertFormattedToString(formattedString) {
+  return formattedString.replaceAll(THOUSAND_SEPARATOR, "").replaceAll(DECIMAL_SEPARATOR, ".");
 }
