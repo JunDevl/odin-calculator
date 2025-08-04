@@ -45,6 +45,9 @@ body {
 
 .operation {
   position: absolute;
+  font-family: "Nova Mono";
+  right: 20px;
+  top: 5px;
 }
 
 #display {
@@ -68,7 +71,7 @@ input {
   padding: 1rem;
   padding-left: 1.4rem;
   border: none;
-  text-align: start;
+  text-align: end;
   font-size: 2.5rem;
   font-family: "Nova Mono";
   box-sizing: border-box;
